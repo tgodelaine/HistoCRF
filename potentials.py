@@ -3,6 +3,8 @@ import numpy as np
 import torch
 #from sklearn.decomposition import PCA 
 
+device = 'cuda'
+
 def compute_diff(f):
     batch_size = 1000  # Choose a suitable batch size
     num_points = f.size(0)
@@ -18,23 +20,48 @@ def compute_diff(f):
             ) ** 2
     return diff_f
 
-def unitary_potential_from_softmax(args, npz_path):
-     # Load the .npz file and access the required keys 
+def unitary_potential_from_softmax(args, probabilities):
+    # Load the .npz file and access the required keys 
+    '''
     data = np.load(npz_path)
+    probabilities = softmax(torch.tensor(data['probabilities'])) # / args.temperature))
+    '''
     softmax = torch.nn.Softmax(dim=1)
-    probabilities = softmax(torch.tensor(data['probabilities'] / args.temperature))
-    print("Softmax output: ", probabilities[:2,:])
-    unitary_potential = -np.log(probabilities)
+    probabilities = softmax(probabilities) # / args.temperature))
+    #unitary_potential = -np.log(probabilities)
+    unitary_potential = -(torch.log(probabilities)) #.clamp(min=1e-8)))
+    #print("data['probabilities']", data['probabilities'].mean(), data['probabilities'].min(), data['probabilities'].max())
+    #print("unitary_potential", unitary_potential.mean(), unitary_potential.min(), unitary_potential.max())
+    #unitary_potential = -(torch.tensor(data['probabilities']+1))
+    #print("unitary_potential", unitary_potential.size())
     return unitary_potential.T     #.reshape((n_labels, -1)) ####### !!!!! Enlever le .T
 
 
 def unitary_potential_from_softmax_and_annotation(args, npz_path):
     # Load the .npz file and access the required keys 
     data = np.load(npz_path)
+    n_class = len(np.unique(data["labels"]))
     image_features, text_features = data["image_features"], data["text_features"]
     annotations = args.annotations 
     n_annotation = args.n_annotations
+    label_annotations = data["labels"][annotations]
 
+    updated_text_features = np.zeros_like(text_features)
+    for i in range(n_class):  #au lieu d'utiliser n_annotation, aller rechercher la classe de chacune des images annotée (pour prendre le cas où toutes les classes ne sont pas présentes sur l'image)
+        idx_i = np.where(label_annotations == i)[0]
+        print("idx_i", idx_i)
+        annotations_i = np.array(annotations)[idx_i]
+        if len(annotations_i) > 0:
+            image_features_i = image_features[annotations_i, :]
+            mean_image_feat_i = np.mean(image_features_i, axis=0)
+            #mean_image_feat_i /= np.linalg.norm(mean_image_feat_i, keepdims=True) #(512,)
+            updated_text_features[i, :] = (mean_image_feat_i + text_features[i,:])/2 #np.mean(np.concatenate((mean_image_feat_i.T, np.expand_dims(text_features[i,:], axis=1)), axis=1))
+            #updated_text_features[i, :] = np.mean(np.concatenate((np.expand_dims(mean_image_feat_i.T, axis=1), np.expand_dims(text_features[i,:], axis=1)), axis=1), axis=1)
+        else: 
+            updated_text_features[i, :] = (text_features[i,:])/2 
+        updated_text_features[i, :] /= np.linalg.norm(updated_text_features[i, :], keepdims=True) #.norm(dim=-1, keepdim=True)
+
+    '''
     updated_text_features = np.zeros_like(text_features)
     for i in range(len(annotations) // n_annotation):  #au lieu d'utiliser n_annotation, aller rechercher la classe de chacune des images annotée (pour prendre le cas où toutes les classes ne sont pas présentes sur l'image)
         annotations_i = annotations[i:2*i+2]
@@ -45,13 +72,139 @@ def unitary_potential_from_softmax_and_annotation(args, npz_path):
         #updated_text_features[i, :] = np.mean(np.concatenate((mean_image_feat_i.T, np.expand_dims(text_features[i,:], axis=1)), axis=1))
         updated_text_features[i, :] = np.mean(np.concatenate((np.expand_dims(mean_image_feat_i.T, axis=1), np.expand_dims(text_features[i,:], axis=1)), axis=1), axis=1)
         updated_text_features[i, :] /= np.linalg.norm(updated_text_features[i, :], keepdims=True) #.norm(dim=-1, keepdim=True)
+    '''
+
+    softmax = torch.nn.Softmax(dim=1)
+    probabilities = image_features @ updated_text_features.T
+    probabilities = softmax(torch.tensor(probabilities)) 
+    unitary_potential = -np.log(probabilities)
+    return unitary_potential.T, updated_text_features     #.reshape((n_labels, -1)) ####### !!!!! Enlever le .T
+
+
+'''
+def unitary_potential_from_softmax_unlabeled_and_annotation(args, npz_path):
+    from utils import update_beta
+
+    # Load the .npz file and access the required keys 
+    data = np.load(npz_path)
+    image_features, text_features = data["image_features"], data["text_features"]
+    labels = data['labels']
+
+    annotations = args.annotations 
+    label_annotations = args.label_annotations
+
+    n_class = np.unique(labels)
+    classes_not_annotated = [1]
+
+    updated_text_features = np.copy(text_features)
+    for c in n_class:
+        #img_c = np.where(labels == c)[0]
+        annotations_c = np.where(label_annotations == c)[0]
+        annotations_c = annotations[annotations_c] #annotations_i
+        #unannotation_c =  [img for img in img_c if img not in annotations_c]
+        #unannotated_features_c = image_features[unannotation_c, :]
+        annotated_features_c = image_features[annotations_c, :] #image_features_i
+
+        mean_image_feat_i = np.mean(annotated_features_c, axis=0)
+        mean_image_feat_i /= np.linalg.norm(mean_image_feat_i, keepdims=True) #(512,)
+        updated_text_features[c, :] = np.mean(np.concatenate((np.expand_dims(mean_image_feat_i.T, axis=1), np.expand_dims(text_features[c,:], axis=1)), axis=1), axis=1)
+        updated_text_features[c, :] /= np.linalg.norm(updated_text_features[c, :], keepdims=True) 
 
     softmax = torch.nn.Softmax(dim=1)
     probabilities = image_features @ updated_text_features.T
     probabilities = softmax(torch.tensor(probabilities / args.temperature))
     print("Softmax output: ", probabilities[:2,:])
     unitary_potential = -np.log(probabilities)
-    return unitary_potential.T     #.reshape((n_labels, -1)) ####### !!!!! Enlever le .T
+    return unitary_potential.T   
+'''
+
+
+def unitary_potential_from_softmax_unlabeled_and_annotation(args, npz_path, beta=False):
+
+    # Load the .npz file and access the required keys 
+    data = np.load(npz_path)
+    image_features, text_features = data["image_features"], data["text_features"]
+    probabilities = data["probabilities"]
+
+    annotations = args.annotations 
+    labels = np.load(npz_path)['labels']
+    label_annotations = labels[annotations]
+   
+    n_class = np.unique(labels)
+    rng = np.random.default_rng(seed=args.seed)
+    n_class_randomized = rng.permutation(n_class)
+    if args.n_class_not_annotated >= len(n_class):
+        classes_not_annotated = n_class-1
+    else:
+        classes_not_annotated = n_class_randomized[:args.n_class_not_annotated]
+    args.classes_not_annotated = classes_not_annotated
+
+    v = np.einsum('ij,ik->jk', probabilities, image_features) / np.sum(probabilities, axis=0)[:, np.newaxis]
+
+    updated_text_features = np.copy(text_features)
+    for c in n_class:
+        # Labeled contribution
+        if args.n_annotations > 0:
+            annotations_ = np.where(label_annotations == c)[0]
+            annotations_c = [annotations[i] for i in annotations_]
+            annotated_features_c = image_features[annotations_c, :] 
+
+        # Unlabeled contribution
+        v_c = v[c, :]
+
+        if args.beta: 
+            from utils import update_beta
+            beta = update_beta(probabilities, alpha=1.0, soft=True)
+
+        # Mean
+        if args.n_annotations > 0:
+            mean_image_feat_i = np.mean(annotated_features_c, axis=0)
+            mean_image_feat_i /= np.linalg.norm(mean_image_feat_i, keepdims=True) #(512,)
+        if not args.beta:
+            if c in classes_not_annotated or args.n_annotations == 0:
+                print(f"Number of annotations = {args.n_annotations}")
+                updated_text_features[c, :] = np.mean(np.concatenate((np.expand_dims(text_features[c,:], axis=1), np.expand_dims(v_c, axis=1)), axis=1), axis=1)
+            else:
+                updated_text_features[c, :] = np.mean(np.concatenate((np.expand_dims(2*mean_image_feat_i.T, axis=1), np.expand_dims(text_features[c,:], axis=1), np.expand_dims(v_c, axis=1)), axis=1), axis=1)
+        else:
+            option = 1
+            if option == 1: 
+                if c in classes_not_annotated or args.n_annotations == 0:
+                    updated_text_features[c, :] = np.mean(np.concatenate((np.expand_dims(text_features[c,:], axis=1), np.expand_dims(v_c, axis=1)), axis=1), axis=1)
+                else:
+                    beta_part = beta[c]*mean_image_feat_i + (1-beta[c])*v_c
+                    #beta_part = np.mean(np.concatenate(((1-beta[c])*np.expand_dims(mean_image_feat_i, axis=1), beta[c]*np.expand_dims(v_c, axis=1)), axis=1), axis=1) 
+                    updated_text_features[c, :] = np.mean(np.concatenate((np.expand_dims(text_features[c,:], axis=1), np.expand_dims(beta_part, axis=1)), axis=1), axis=1)
+            elif option == 2: 
+                beta_part = (1-beta[c])*text_features[c,:] + beta[c]*v_c
+                #beta_part = np.mean(np.concatenate((np.expand_dims((1-beta[c])*text_features[c,:], axis=1), np.expand_dims(beta[c]*v_c, axis=1)), axis=1), axis=1)
+                if c in classes_not_annotated or args.n_annotations == 0:
+                    updated_text_features[c, :] = beta_part
+                else:
+                    updated_text_features[c, :] = np.mean(np.concatenate((np.expand_dims(mean_image_feat_i, axis=1), np.expand_dims(beta_part, axis=1)), axis=1), axis=1)
+        updated_text_features[c, :] /= np.linalg.norm(updated_text_features[c, :], keepdims=True) 
+
+    softmax = torch.nn.Softmax(dim=1)
+    probabilities = image_features @ updated_text_features.T
+    probabilities = softmax(torch.tensor(probabilities / args.temperature))
+    #print("Softmax output: ", probabilities[:2,:])
+    unitary_potential = -np.log(probabilities)
+    return unitary_potential.T   
+
+
+
+'''
+# !!! From StatA github https://github.com/MaxZanella/StatA/blob/main/solvers/StatA.py#L148 !!! 
+def update_mu(adapter, query_features, z, beta, init_prototypes):
+
+    mu = torch.einsum('ij,ik->jk', z, query_features) 
+    mu /= torch.sum(z, dim=0).unsqueeze(-1)
+    mu = mu.unsqueeze(1)
+    mu /= mu.norm(dim=-1, keepdim=True)
+    mu = beta.unsqueeze(-1).unsqueeze(-1) * mu + (1-beta).unsqueeze(-1).unsqueeze(-1) * init_prototypes
+    mu /= mu.norm(dim=-1, keepdim=True)
+    return mu
+'''
 
 
 def pairwise_potential_from_model_features(npz_path, variances, weight, n_components=10): 
@@ -69,18 +222,21 @@ def pairwise_potential_from_model_features(npz_path, variances, weight, n_compon
     for i in range(n):
         for j in range(n):
             f_i, f_j = features[i], features[j]
-            diff = (f_i - f_j).reshape((-1,1))
+            diff = f_i @ f_j.T 
+            if i == j: 
+                diff = 0
+            #diff = (f_i @ f_j.T).reshape((-1,1))
 
-            pairwise_potential[i, j] = np.exp(-0.5 * np.linalg.norm(diff)**2 / variances[0])
+            #pairwise_potential[i, j] = np.exp(-0.5 * np.linalg.norm(diff)**2 / variances[0])
+            pairwise_potential[i, j] = diff #np.exp(-0.5 * (1-diff) / variances[0])
 
     # Apply PCA to reduce the dimensions
     #pca = PCA(n_components=n_components)
-    print("pairwise_pot", pairwise_potential.shape)
     #reduced_pairwise_potential = pca.fit_transform(pairwise_potential)
     #print("reduced_pairwise_pot", reduced_pairwise_potential.shape)
     
     #pairwise_potential_flat = pairwise_potential.reshape((-1,1))
-    return weight[0] * pairwise_potential
+    return pairwise_potential
 
 def pairwise_potential_from_model_features_and_position(npz_path, variances, weight): 
     # Load the .npz file
