@@ -52,7 +52,7 @@ classname_to_classname = {
 
 class BRACS(Dataset):
 
-    image_dir = os.path.join("data", "BRACS", "BRACS_RoI", "latest_version", "test")
+    image_dir = os.path.join("BRACS", "BRACS_RoI", "latest_version", "test")
     
     def __init__(self, root, transform=None):
         self.image_dir = os.path.join(root, self.image_dir)

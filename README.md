@@ -45,7 +45,10 @@ Moreover, integrating a human in the loop reaches a further gain of 32.7\% with 
 
 | Model        | 🔗 Download Link  | Folder name |
 | -------------- | --------------------------------- | ---------------------------------|
-| CONCH | [📥 Link](https://github.com/mahmoodlab/CONCH) | `./root/HistoCRF/conch` |
+| CONCH | [📥 Link](https://github.com/mahmoodlab/CONCH) | `./root/HistoCRF/CONCH` |
+| UNI2h | [📥 Link](https://huggingface.co/MahmoodLab/UNI2-h) | No download is need but you do need to request access. |
+
+**Important**: For thhe model CONCH, do not forget to download the checkpoints. 
 
 
 
@@ -64,7 +67,8 @@ Moreover, integrating a human in the loop reaches a further gain of 32.7\% with 
 ## Usage 
 
 1. Once the datasets are downloaded, you must extract the features of each patch in the dataset. By using the following command line, a *.npz* file will be created at `./root/data_processed`.
-   ```python
+   ```bash
+   cd HistoCRF
    python3 extraction.py --root_dir ./root/ --data_dir ./data/ --model {model} --dataset {dataset}
    ```
 
@@ -72,9 +76,9 @@ Moreover, integrating a human in the loop reaches a further gain of 32.7\% with 
 
 | Experiment             | Command line                                                                                                                      |
 | -----------------------| --------------------------------------------------------------------------------------------------------------------------------- |
-| **LP**  | `python3 inference_iteration_split_split.py --root_path ./root/ --model {model} --dataset {dataset} --uni_pot softmax_unlabeled_and_annotation --weight 0.1 0.01 --pair_pot model_features minus_model_features_ann --compat indicator potts --sparse_method cossim --n_affinity 0 16 --n_annotations {n_annotations} --annotation_method error -ann_iterations {ann_iterations} --N_UP -100 --N_PROP 50 --seed {seed}` |
-| **HistoCRF**      | `python3 inference_iteration_split_split.py --root_path ./root/ --model {model} --dataset {dataset} --uni_pot softmax_unlabeled_and_annotation --weight 0.1 0.01 --pair_pot model_features minus_model_features_ann --compat indicator potts --sparse_method cossim --n_affinity 0 16 --n_annotations {n_annotations} --annotation_method error -ann_iterations 1 --N_UP -1 --N_PROP 50 --seed {seed}` |
-| **HistoCRF-HITL**      | `python3 inference_iteration_split_split.py --root_path ./root/ --model {model} --dataset {dataset} --uni_pot softmax_unlabeled_and_annotation --weight 0.1 0.01 --pair_pot model_features minus_model_features_ann --compat indicator potts --sparse_method cossim --n_affinity 0 16 --n_annotations {n_annotations} --annotation_method error -ann_iterations {ann_iterations} --N_UP -1 --N_PROP 50 --seed {seed}` |
+| **LP**  | `python3 inference_iteration_split_split.py --root_dir ./root/ --model {model} --dataset {dataset} --uni_pot softmax --weight 0.1 0.01 --pair_pot minus_model_features model_features_ann --compat indicator potts --sparse_method cossim --n_affinity 0 16 --n_annotations {n_annotations} --annotation_method error -ann_iterations {ann_iterations} --N_UP -100 --N_PROP 1 --seed {seed}` |
+| **HistoCRF**      | `python3 inference_iteration_split_split.py --root_dir ./root/ --model {model} --dataset {dataset} --uni_pot softmax --weight 0.1 0.01 --pair_pot minus_model_features model_features_ann --compat indicator potts --sparse_method cossim --n_affinity 0 16 --n_annotations {n_annotations} --annotation_method error -ann_iterations 1 --N_UP -1 --N_PROP 50 --seed {seed}` |
+| **HistoCRF-HITL**      | `python3 inference_iteration_split_split.py --root_dir ./root/ --model {model} --dataset {dataset} --uni_pot softmax --weight 0.1 0.01 --pair_pot minus_model_features model_features_ann --compat indicator potts --sparse_method cossim --n_affinity 0 16 --n_annotations {n_annotations} --annotation_method error -ann_iterations {ann_iterations} --N_UP -1 --N_PROP 50 --seed {seed}` |
 
 
 ## Contact 

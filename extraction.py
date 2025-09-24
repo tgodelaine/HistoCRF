@@ -235,7 +235,7 @@ def extraction(args):
 
 
     elif args.model == 'conch':
-        from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
+        from CONCH.conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
         from models.llm import features_extraction
 
         # Load model and get data
@@ -300,7 +300,7 @@ def extraction(args):
         from timm.data import resolve_data_config
         from timm.data.transforms_factory import create_transform
         from transformers import AutoProcessor, AutoModelForZeroShotImageClassification
-        from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
+        from CONCH.conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
         from torchvision import transforms
         from models.llm import features_extraction
         

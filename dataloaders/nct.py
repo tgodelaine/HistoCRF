@@ -37,7 +37,7 @@ class NCT(Dataset):
 
     def __init__(self, root, transform=None):
 
-        self.dataset_dir = os.path.join(root, 'data', self.dataset_dir)
+        self.dataset_dir = os.path.join(root, self.dataset_dir)
         self.image_dir = os.path.join(self.dataset_dir, "NCT-CRC-HE-100K")
         self.image_dir_test = os.path.join(self.dataset_dir, "CRC-VAL-HE-7K")
 

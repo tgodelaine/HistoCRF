@@ -49,7 +49,7 @@ def mean_field_iteration_split(args, npz_path, unary, pairwise, compat, variance
 
         # Automatic weight
         if args.n_annotations > 0:
-            n_patch_bound_annotation = torch.unique(torch.tensor(args.annotated_row_positions)).numel()
+            n_patch_bound_annotation = torch.unique(torch.as_tensor(args.annotated_row_positions)).numel()
             if args.n_affinity[0] == 0:
                 ratios = [1, unary.size()[1]/(n_patch_bound_annotation)] 
             else:
