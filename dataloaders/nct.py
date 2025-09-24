@@ -1,8 +1,7 @@
 import os
-import pandas as pd
 from PIL import Image
-from torchvision.io import read_image
 from torch.utils.data import Dataset 
+
 
 templates = [
             "a histopathological image showing {}.",
@@ -15,7 +14,6 @@ templates = [
             "{} is shown.",
             "this is {}.",
             "there is {}.",
-            #"a histopathological image showing {}.",
             "a histopathological image of {}.",
             "a histopathological photograph of {}.",
             "a histopathological photograph showing {}.",
@@ -30,13 +28,12 @@ templates = [
             "{}, H&E."
 ]
 
-
 labels_dict = {"TUM": 8, "STR": 7, "NORM": 6, "MUS": 5, "MUC": 4, "LYM": 3, "DEB": 2, "BACK": 1, "ADI": 0}
 
 
 class NCT(Dataset):
     
-    dataset_dir = "NCT-CRC-HE-100K"
+    dataset_dir = os.path.join("NCT-CRC-HE-100K")
 
     def __init__(self, root, transform=None):
 
@@ -67,7 +64,6 @@ class NCT(Dataset):
             img_path = self.images[idx]
         image = Image.open(img_path)
         label = labels_dict[img_path.split(os.sep)[-2]]
-        classname = self.classnames[label]
 
         if self.transform:
             image = Image.open(img_path)

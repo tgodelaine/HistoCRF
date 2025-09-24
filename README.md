@@ -1,10 +1,17 @@
-# Real-time Refinement of Histopathological Predictions via Human-in-the-Loop [Submitted to ICASSP 2026]
+# Conditional Random Fields for Interactive Refinement of Histopathological Predictions [Submitted to ICASSP 2026]
 
-Implementation of **[Real-time Refinement of Histopathological Predictions via Human-in-the-Loop](doi)**.
+Implementation of **[Conditional Random Fields for Interactive Refinement of Histopathological Predictions](doi)**.
 
-Assisting pathologists in the analysis of histopathological images has high clinical value, as it supports cancer detection and staging. In this context, histology foundation models have recently emerged, providing strong yet imperfect initial predictions. We refine these predictions by adapting Conditional Random Fields (CRFs) to histopathological applications, requiring no additional model training. We present HistoCRF, a CRF-based framework with a novel definition of the pairwise potential that includes both a diversity-promoting term and a term that leverages expert annotations. Experiments on five patch-level classification datasets covering different organs and diseases demonstrate accuracy gains of 14.3\% without annotations and 27.1\% with only 100 annotations, compared to the foundation models alone. Moreover, we highlight the value of integrating a human in the loop: by iteratively correcting the predictions, the expert guides the refinement process in real time, reaching a further gain of 32.7\% with the same number of annotations. 
+Assisting pathologists in the analysis of histopathological images has high clinical value, as it supports cancer detection and staging. In this context, histology foundation models have recently emerged. Among them, Vision-Language Models (VLMs) provide strong yet imperfect zero-shot predictions. We propose to refine these predictions by adapting Conditional Random Fields (CRFs) to histopathological applications, requiring no additional model training.
+We present HistoCRF, a CRF-based framework, with a novel definition of the pairwise potential that promotes label diversity and leverages expert annotations. We consider three experiments: without annotations, with expert annotations, and with iterative human-in-the-loop annotations that progressively correct misclassified patches.
+Experiments on five patch-level classification datasets covering different organs and diseases demonstrate average accuracy gains of 14.3\% without annotations and 27.1\% with only 100 annotations, compared to zero-shot predictions. 
+Moreover, integrating a human in the loop reaches a further gain of 32.7\% with the same number of annotations.  
+
+![Alt text](./wsi_4slides_bottom.png)
 
 **Authors**: [T. Godelaine](https://scholar.google.com/citations?user=xKcPd0oAAAAJ&hl=en&oi=ao), [M. Zanella](https://scholar.google.com/citations?user=FIoE9YIAAAAJ&hl=fr&oi=ao), [K. El Khoury](https://scholar.google.be/citations?user=UU_keGAAAAAJ&hl=fr), [S. Mahmoudi](https://scholar.google.com/citations?user=K2BAx8sAAAAJ&hl=fr), [B. Macq](https://scholar.google.be/citations?user=H9pGN70AAAAJ&hl=fr), [C. De Vleeschouwer](https://scholar.google.com/citations?user=xb3Zc3cAAAAJ&hl=fr&oi=ao)
+
+
 
 ## Contents 
 
@@ -31,31 +38,37 @@ Assisting pathologists in the analysis of histopathological images has high clin
    Install the required packages
    ```bash
    cd HistoCRF
-   pip3 install -r requirements.txt
+   pip install -r requirements.txt
    ```
 
+2. Models downloads: 
 
-2. Datasets downloads:
+| Model        | 🔗 Download Link  | Folder name |
+| -------------- | --------------------------------- | ---------------------------------|
+| CONCH | [📥 Link](https://github.com/mahmoodlab/CONCH) | `./root/HistoCRF/conch` |
 
-| Dataset        | 🔗 Download Link                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| BACH           | [📥 Link](https)                     |
-| BRACS           | [📥 Link](https)                    |
-| ESCA       | [📥 Link](https) |
-| NCT       | [📥 Link](https)                                                          |
-| SICAP       | [📥 Link](https)                                                        |
 
-📌 Each dataset must be divided into three folders: train, val and test. Images were named following this structure: *classname_number*.
-**Important**: All file paths in scripts are set with the placeholder "TO CHANGE". You will need to search for this placeholder in the cloned repository's files and replace it with the appropriate path ```/root/path/``` as specified for your system. In this setup, we have placed the different datasets inside a folder named `./data`.
+
+3. Datasets downloads:
+
+| Dataset        | 🔗 Download Link                                                                                        | Folder name |
+| -------------- | -------------------------------------------------------------------------------------------------------- | -------------- |
+| BACH           | [📥 Link](https://mics-lab.github.io/thunder/)                     |  `./data/thunder/datasets/BACH` |
+| BRACS           | [📥 Link](https://www.bracs.icar.cnr.it/details/)                    | `./data/BRACS`
+| ESCA       | [📥 Link](https://mics-lab.github.io/thunder/) | `./data/thunder/datasets/ESCA` |
+| NCT       | [📥 Link](https://zenodo.org/records/1214456)| `./data/NCT-CRC-HE-100K` |
+| SICAP       | [📥 Link](https://github.com/jusiro/mil_histology)|`./data/SICAP_MIL`                                                      |
+
+**Important**: Each dataset must be placed in the directory `./data/`.
 
 ## Usage 
 
-1. Once the datasets are downloaded, you must extract the features of each patch in the dataset. By using the following command line, a .npz file will be created at ./root/data_processed. 
+1. Once the datasets are downloaded, you must extract the features of each patch in the dataset. By using the following command line, a *.npz* file will be created at `./root/data_processed`.
    ```python
    python3 extraction.py --root_dir ./root/ --data_dir ./data/ --model {model} --dataset {dataset}
    ```
 
-2. Once the features are extracted, you can run the experiments using the following command lines. The results will be saved into a JSON file for further analysis at ./root/results. 
+2. Once the features are extracted, you can run the experiments using the following command lines. The results will be saved into a JSON file for further analysis at `./root/results`. 
 
 | Experiment             | Command line                                                                                                                      |
 | -----------------------| --------------------------------------------------------------------------------------------------------------------------------- |

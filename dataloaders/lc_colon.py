@@ -1,9 +1,8 @@
 import os
-import pandas as pd
 from PIL import Image
 from torchvision.io import read_image
 from torch.utils.data import Dataset 
-import numpy as np
+
 
 templates = [
             "a histopathological image showing {}.",
@@ -16,7 +15,6 @@ templates = [
             "{} is shown.",
             "this is {}.",
             "there is {}.",
-            #"a histopathological image showing {}.",
             "a histopathological image of {}.",
             "a histopathological photograph of {}.",
             "a histopathological photograph showing {}.",
@@ -32,6 +30,7 @@ templates = [
 ]
 
 labels_dict = {"colon_n": 0, "colon_aca": 1}
+
 
 class LCcolon(Dataset):
     
@@ -56,7 +55,6 @@ class LCcolon(Dataset):
         image_path = self.images[idx]
         image = read_image(image_path)
         label = labels_dict[image_path.split(os.sep)[-2]]
-        classname = self.classnames[label]
 
         if self.transform:
             image = Image.open(image_path)

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def variance_from_image(args, npz_path):
     # Load the .npz file
     data = np.load(npz_path)

@@ -1,9 +1,10 @@
 import os
-import pandas as pd
 from PIL import Image
 import re
 from torchvision.io import read_image
 from torch.utils.data import Dataset 
+import numpy as np 
+
 
 templates = [
             "a histopathological image showing {}.",
@@ -16,7 +17,6 @@ templates = [
             "{} is shown.",
             "this is {}.",
             "there is {}.",
-            #"a histopathological image showing {}.",
             "a histopathological image of {}.",
             "a histopathological photograph of {}.",
             "a histopathological photograph showing {}.",
@@ -31,6 +31,7 @@ templates = [
             "{}, H&E."
 ]
 
+
 def extract_coords(name):
     # Assumes the format ends with `_x_y_label_l_000`
     match = re.search(r'tile_\w+_\d+_(\d+)_(\d+)_label_\d+_\d+\.png', name)
@@ -40,28 +41,31 @@ def extract_coords(name):
     else:
         return (float('inf'), float('inf'))  # In case of invalid format
 
-class SkinCancer(Dataset):
-
-    image_dir = "/auto/globalscratch/users/t/g/tgodelai/miccai25/" #skincancer2/data
+class SkinCancer(Dataset): 
     
     def __init__(self, root, transform=None, n_patient=0):
 
-        self.image_dir = os.path.join(self.image_dir, 'data', 'nnUNet_raw', 'Dataset254_skincancer2', 'imagesTe')
-        #os.path.join(root, 'data', self.image_dir)
+        self.image_dir = os.path.join(root, 'data', 'nnUNet_raw', 'Dataset254_skincancer2', 'imagesTe')
         txt_path = '/auto/globalscratch/users/t/g/tgodelai/miccai25/data/skincancer2/data/1x/test.txt'
         with open(txt_path, 'r') as f:
             test_patients = f.readlines()
         patient = test_patients[n_patient].split('\n')[0]
         print("patient", patient)
-        #csv_file = os.path.join(self.image_dir, "data", "test.csv")
-        #self.data_test = pd.read_csv(csv_file)
+
         data_files = [f for f in os.listdir(self.image_dir) if f.endswith('.png')]
         data_files = [f for f in data_files if patient + '_' in f]
-        print("data_files", len(data_files))
+        self.background = False # Remove background if False 
+        if not self.background:
+            data_files_without_background = []
+            for f in data_files:
+                label = int(f.split('_')[6])
+                if label != 0:
+                    data_files_without_background.append(f)
+            data_files = np.copy(data_files_without_background)
+        print("len data_files", len(data_files))
+
         self.data_files = sorted(data_files, key=extract_coords)
 
-        #self.image_paths_test = self.data_test['Tiles_path'].values
-        #self.labels_test = self.data_test['Label'].values
         self.classnames = [
                 "An empty glass slide",
                 "Glands",
@@ -76,6 +80,8 @@ class SkinCancer(Dataset):
                 "Squamous Cell Carcinom",
                 "Intra Epidermal Carinoma"
              ]
+        if not self.background: 
+            self.classnames = self.classnames[1:]
         self.template = templates
         self.transform = transform
 
@@ -89,6 +95,8 @@ class SkinCancer(Dataset):
         image = read_image(image_path)
         #w, h, c = image.shape
         label = int(image_name.split('_')[6])   #int(self.data_test.at[idx, "Label"])
+        if not self.background: 
+            label = label - 1
         x, y = image_name.split('_')[3:5]
         position = [int(x),int(y)]
         #classname = self.classnames[self.data_test.at[idx, "labels"]]

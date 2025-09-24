@@ -1,11 +1,8 @@
 import os
-import random
-import pandas as pd
 from PIL import Image
 from torchvision.io import read_image
 from torch.utils.data import Dataset 
-import torch 
-import numpy as np
+
 
 templates = [
             "a histopathological image showing {}.",
@@ -18,7 +15,6 @@ templates = [
             "{} is shown.",
             "this is {}.",
             "there is {}.",
-            #"a histopathological image showing {}.",
             "a histopathological image of {}.",
             "a histopathological photograph of {}.",
             "a histopathological photograph showing {}.",
@@ -36,13 +32,14 @@ templates = [
 labels_dict = {"lung_aca": 0, "lung_n": 1, 
                 "lung_scc": 2}
 
+
 class LClung(Dataset):
     
-    dataset_dir = "LC25000"
+    dataset_dir = os.path.join("data", "LC25000")
     
     def __init__(self, root, transform=None):
 
-        self.dataset_dir = os.path.join(root, 'data', self.dataset_dir)
+        self.dataset_dir = os.path.join(root, self.dataset_dir)
         self.image_dir = os.path.join(self.dataset_dir, 'lung_image_sets')
         
         self.images = self.get_images()
@@ -59,7 +56,6 @@ class LClung(Dataset):
         image_path = self.images[idx]
         image = read_image(image_path)
         label = labels_dict[image_path.split(os.sep)[-2]]
-        classname = self.classnames[label]
 
         if self.transform:
             image = Image.open(image_path)

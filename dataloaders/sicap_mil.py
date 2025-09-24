@@ -1,10 +1,9 @@
 import os
-import random
 import pandas as pd
 from PIL import Image
 from torchvision.io import read_image
 from torch.utils.data import Dataset 
-import torch 
+
 
 templates = [
             "a histopathological image showing {}.",
@@ -17,7 +16,6 @@ templates = [
             "{} is shown.",
             "this is {}.",
             "there is {}.",
-            #"a histopathological image showing {}.",
             "a histopathological image of {}.",
             "a histopathological photograph of {}.",
             "a histopathological photograph showing {}.",
@@ -32,13 +30,14 @@ templates = [
             "{}, H&E."
 ]
 
+
 class SicapMIL(Dataset):
     
-    image_dir = "SICAP_MIL"
+    image_dir = os.path.join("miccai25", "data", "SICAP_MIL")
     
     def __init__(self, root, transform=None):
 
-        self.image_dir = os.path.join(root, 'data', self.image_dir)
+        self.image_dir = os.path.join(root, self.image_dir)
 
         csv_file = os.path.join(self.image_dir, "dataframes", "gt_test_patches.xlsx")
         self.data_test = pd.read_excel(csv_file)
@@ -74,11 +73,9 @@ class SicapMIL(Dataset):
         image = read_image(img_path)
         w, h, c = image.shape
         label = int(self.data_test.at[idx, "labels"])
-        classname = self.classnames[self.data_test.at[idx, "labels"]]
 
         if self.transform:
             image = Image.open(img_path)
             image = self.transform(image)
-        print("Image type", type(image))
+
         return image, label
-    
