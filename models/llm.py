@@ -69,7 +69,7 @@ def features_extraction(args, model, tokenizer, dataset, dataloader, get_positio
                 classname = classname.replace('_', ' ')
                 texts = [t.format(classname)  for t in dataset.template]
                 if args.model == 'conch':
-                    from conch.open_clip_custom import tokenize
+                    from CONCH.conch.open_clip_custom import tokenize
                     texts = tokenize(texts=texts, tokenizer=tokenizer)
                     class_embeddings = encode_text(texts).cuda()
                 else:
