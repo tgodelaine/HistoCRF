@@ -7,11 +7,11 @@ import torch
 from compatibility import compatibility_from_text_features, compatibility_from_potts, compatibility_from_indicator
 from iteration import mean_field_iteration_split
 from label_propagation_iteration import label_propagation
-from potentials import unitary_potential_from_softmax, unitary_potential_from_softmax_and_annotation
+from potentials import unitary_potential_from_softmax
 from train_linear import train_linear
 from utils_sparsity import determine_sparsity_split_split
 from utils import calculate_accuracy, save_results_gif, save_results
-from utils_annotations import get_annotation_iterative, unitary_potential_from_softmax_unlabeled_and_annotation, annotated_unitary_potential
+from utils_annotations import get_annotation_iterative, unitary_potential_from_softmax_unlabeled_and_annotation, annotated_unitary_potential, unitary_potential_from_softmax_and_annotation
 from variance import custom_variance, variance_from_image, variance_from_features
 
 
@@ -53,7 +53,7 @@ def inference(args, npz_path, unitary_potential, cossim=None, feat=None, data=No
             local_pairwise_potential = potentials_correspondance[args.pair_pot[0]](args, npz_path, local_positions, feat, variances, data).to(device)
             pairwise_potential.append(local_pairwise_potential)
 
-            local_compatibility =  torch.tensor(compatibility_correspondance[args.compat[0]](args, npz_path), dtype=torch.float16, device=device)
+            local_compatibility =  compatibility_correspondance[args.compat[0]](args, npz_path).to(dtype=torch.float16, device=device)
             compatibility.append(local_compatibility)
 
         if args.n_affinity[1] > 0:
@@ -62,14 +62,14 @@ def inference(args, npz_path, unitary_potential, cossim=None, feat=None, data=No
             nonlocal_pairwise_potential = potentials_correspondance[args.pair_pot[i]](args, npz_path, nonlocal_positions, feat, variances, data).to(device)
             pairwise_potential.append(nonlocal_pairwise_potential)
 
-            nonlocal_compatibility =  torch.tensor(compatibility_correspondance[args.compat[i]](args, npz_path), dtype=torch.float16, device=device)
+            nonlocal_compatibility =  compatibility_correspondance[args.compat[i]](args, npz_path).to(dtype=torch.float16, device=device)
             compatibility.append(nonlocal_compatibility)
 
         if args.n_annotations > 0:
             annotation_pairwise_potential = potentials_correspondance[args.pair_pot[-1]](args, npz_path, annotation_positions, feat, variances, args.weight).to(device)
             pairwise_potential.append(annotation_pairwise_potential)
 
-            annotation_compatibility = torch.tensor(compatibility_correspondance[args.compat[-1]](args, npz_path), dtype=torch.float16, device=device)
+            annotation_compatibility = compatibility_correspondance[args.compat[-1]](args, npz_path).to(dtype=torch.float16, device=device)
             compatibility.append(annotation_compatibility)
 
     # Inference
@@ -77,7 +77,7 @@ def inference(args, npz_path, unitary_potential, cossim=None, feat=None, data=No
     Q = mean_field_iteration_split(args, npz_path, unitary_potential, pairwise_potential, compatibility, variances, max_iters=args.n_iterations, cossim=None, data=data)
     time1_inference = time.time()
     inference_time = time1_inference-time0_inference
-    print("Time to compute one iterative message passing", inference_time)
+    #print("Time to compute one iterative message passing", inference_time)
 
     map_accuracy, map_balanced_accuracy = None, None
     if EVALUATE: 
@@ -98,6 +98,7 @@ def inference_iteration(args, npz_path):
         cossim = torch.tensor(np.load(npz_path_)['cossim'], dtype=torch.int16, device=device)
     else:
         cossim = torch.tensor(data['cossim'], dtype=torch.int32, device=device)
+
     feat = torch.tensor(data['features'], dtype=torch.float32, device=device)
     args.width = data["width"]
     args.height = data["height"]
@@ -105,7 +106,7 @@ def inference_iteration(args, npz_path):
     labels = torch.tensor(data["labels"], device=device)
 
     # Get unitary pot
-    initial_unitary_potential = torch.tensor(unitary_potential_from_softmax(args, probabilities), dtype=torch.float16, device=device)
+    initial_unitary_potential = unitary_potential_from_softmax(args, probabilities).to(dtype=torch.float16, device=device)
     unitary_potential = initial_unitary_potential.clone()
     initial_labels = torch.argmin(initial_unitary_potential, dim=0).cpu()
 
@@ -258,7 +259,7 @@ def parser():
     pair_pot_choices = ['model_features',
                         'model_features_and_position', 
                         'minus_model_features', 
-                        'minus_model_features_ann']
+                        'model_features_ann']
 
     parser = argparse.ArgumentParser()
     # Setup 
@@ -269,8 +270,8 @@ def parser():
     # CRF
     parser.add_argument('--n_iterations', type=int, default=25)
     parser.add_argument('--weight', type=float, nargs='+', default=1)
-    parser.add_argument('--var', type=str, default='image', choices=['custom', 'image', 'features'])
-    parser.add_argument('--custom_var', type=float, nargs='+', default=None)
+    parser.add_argument('--var', type=str, default='custom', choices=['custom', 'image', 'features'])
+    parser.add_argument('--custom_var', type=float, nargs='+', default=[1, 1])
     parser.add_argument('--uni_pot', type=str, default='softmax', choices=['softmax','softmax_and_annotation', 'softmax_unlabeled_and_annotation'])
     parser.add_argument('--pair_pot', type=str, nargs='+', default='image_and_position', choices=pair_pot_choices)
     parser.add_argument('--temperature', type=float, default=1)
@@ -280,7 +281,7 @@ def parser():
     parser.add_argument('--height', type=int, default=-1)
     # Patches
     parser.add_argument('--sim_patches', type=int, default=1)
-    parser.add_argument('--patch_size', type=int, nargs='+', default=112)
+    parser.add_argument('--patch_size', type=int, nargs='+', default=[512])
     # Sparsity
     parser.add_argument('--sparse_method', type=str, default='None', choices=['None', 'random', 'threshold', 'neighbor', 'nonlocal', 'localneighbor', 'nonlocalrandom', 'randomsparse', 'oracle', 'zsprob', 'cossim'])
     parser.add_argument('--threshold', type=float, default=1e-1)
@@ -297,7 +298,7 @@ def parser():
     # Update unitary
     parser.add_argument('--beta', type=bool, default=False)
     # Exp 
-    parser.add_argument('--PROP', type=bool)
+    parser.add_argument('--PROP', type=bool, default=True)
     parser.add_argument('--N_UP', type=int, default=-1)
     parser.add_argument('--N_PROP', type=int, default=1)
     parser.add_argument('--it', type=int, default=0)

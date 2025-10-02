@@ -22,7 +22,6 @@ def determine_sparsity_split_split(args, n_pixel, npz_path, img=None, features=N
         local_positions = optimize_pixel_selection_neighbors_vect(img_size, args.n_affinity[0])
         factors[0] = args.n_affinity[0]
 
-    t0 = time.time()
     if args.n_affinity[1] > 0: 
         factors[1] = args.n_affinity[1]
         if sparse_method == 'random':
@@ -34,14 +33,11 @@ def determine_sparsity_split_split(args, n_pixel, npz_path, img=None, features=N
             nonlocal_positions = optimize_pixel_selection_vect(args, img, npz_path, prob=True)
         elif sparse_method == 'cossim':
             nonlocal_positions = cossim_pixel_selection(args, npz_path, cossim)
-    print("Time sparsity 1:", time.time()-t0)
 
-    t1 = time.time()
     if len(annotated_positions) > 0:
         annotation_positions = annotation_pixel_selection_cossim(args, npz_path, features) #Seule les images ayant le même labels prédits sont reliées aux images annotées de 
         #annotation_positions = torch.tensor(annotated_positions).repeat((img_size[0]*img_size[1],1)) #Toutes les images sont reliées aux images annotées
         factors[2] = len(args.annotations) 
-    print("Time sparsity 2:", time.time()-t1)
 
     return local_positions, nonlocal_positions, annotation_positions, factors
 

@@ -105,12 +105,12 @@ def inference_lab_prop(args, npz_path, unitary_potential, sparse, cossim=None, f
 
     # Pairwise potential and compatibility matrix
     if args.sparse_method != 'None': 
-        from sparse_potentials import pairwise_potential_from_model_features_and_position, pairwise_potential_from_model_features, pairwise_potential_from_minus_model_features, pairwise_potential_from_minus_model_features_ann
+        from sparse_potentials import pairwise_potential_from_model_features_and_position, pairwise_potential_from_model_features, pairwise_potential_from_minus_model_features, pairwise_potential_from_model_features_ann
         potentials_correspondance = {
             "model_features_and_position": pairwise_potential_from_model_features_and_position, 
             "model_features": pairwise_potential_from_model_features,
             "minus_model_features": pairwise_potential_from_minus_model_features, 
-            "minus_model_features_ann": pairwise_potential_from_minus_model_features_ann
+            "model_features_ann": pairwise_potential_from_model_features_ann
         }
 
         img = None

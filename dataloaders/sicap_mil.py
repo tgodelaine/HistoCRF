@@ -33,7 +33,7 @@ templates = [
 
 class SicapMIL(Dataset):
     
-    image_dir = os.path.join("miccai25", "data", "SICAP_MIL")
+    image_dir = os.path.join("SICAP_MIL")
     
     def __init__(self, root, transform=None):
 

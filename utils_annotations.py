@@ -238,6 +238,37 @@ def unitary_potential_from_softmax_unlabeled_and_annotation(args, npz_path, prob
     return unitary_potential.T, updated_text_features 
 
 
+def unitary_potential_from_softmax_and_annotation(args, npz_path):
+    # Load the .npz file and access the required keys 
+    data = np.load(npz_path)
+    n_class = len(np.unique(data["labels"]))
+    image_features, text_features = data["image_features"], data["text_features"]
+    annotations = args.annotations 
+    n_annotation = args.n_annotations
+    label_annotations = data["labels"][annotations]
+
+    updated_text_features = np.zeros_like(text_features)
+    for i in range(n_class):  #au lieu d'utiliser n_annotation, aller rechercher la classe de chacune des images annotée (pour prendre le cas où toutes les classes ne sont pas présentes sur l'image)
+        idx_i = np.where(label_annotations == i)[0]
+        print("idx_i", idx_i)
+        annotations_i = np.array(annotations)[idx_i]
+        if len(annotations_i) > 0:
+            image_features_i = image_features[annotations_i, :]
+            mean_image_feat_i = np.mean(image_features_i, axis=0)
+            #mean_image_feat_i /= np.linalg.norm(mean_image_feat_i, keepdims=True) #(512,)
+            updated_text_features[i, :] = (mean_image_feat_i + text_features[i,:])/2 #np.mean(np.concatenate((mean_image_feat_i.T, np.expand_dims(text_features[i,:], axis=1)), axis=1))
+            #updated_text_features[i, :] = np.mean(np.concatenate((np.expand_dims(mean_image_feat_i.T, axis=1), np.expand_dims(text_features[i,:], axis=1)), axis=1), axis=1)
+        else: 
+            updated_text_features[i, :] = (text_features[i,:])/2 
+        updated_text_features[i, :] /= np.linalg.norm(updated_text_features[i, :], keepdims=True) #.norm(dim=-1, keepdim=True)
+
+    softmax = torch.nn.Softmax(dim=1)
+    probabilities = image_features @ updated_text_features.T
+    probabilities = softmax(torch.tensor(probabilities)) 
+    unitary_potential = -np.log(probabilities)
+    return unitary_potential.T, updated_text_features     #.reshape((n_labels, -1)) ####### !!!!! Enlever le .T
+
+
 def annotated_unitary_potential(args, labels, Q):
     annotated_positions = args.annotations 
     classes_not_annotated =  args.classes_not_annotated

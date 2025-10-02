@@ -235,7 +235,7 @@ def extraction(args):
 
 
     elif args.model == 'conch':
-        from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
+        from CONCH.conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
         from models.llm import features_extraction
 
         # Load model and get data
@@ -300,7 +300,7 @@ def extraction(args):
         from timm.data import resolve_data_config
         from timm.data.transforms_factory import create_transform
         from transformers import AutoProcessor, AutoModelForZeroShotImageClassification
-        from conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
+        from CONCH.conch.open_clip_custom import create_model_from_pretrained, get_tokenizer
         from torchvision import transforms
         from models.llm import features_extraction
         
@@ -509,7 +509,7 @@ def parser():
     parser.add_argument('--file_ending', type=str, default='.tif')
     parser.add_argument('--patch_size', type=int, default=254)
     parser.add_argument('--n_patient', type=int, default=0)
-    parser.add_argument('--dissimilar', type=bool, default=True)
+    parser.add_argument('--dissimilar', action="store_false")
     args = parser.parse_args()
 
     return args
@@ -523,5 +523,10 @@ if __name__ == '__main__':
         get_position = True
     else:
         get_position = False
+
+    if args.dataset == 'bach_wsi':
+        data_dir_patches = os.path.join(args.data_dir, 'thunder', 'datasets', 'bach', 'ICIAR2018_BACH_Challenge', f'patches_{args.size}')
+        if not os.path.isdir(data_dir_patches):
+            raise RuntimeError('You need to extract patches from the whole slide images. Run the following command: python3 datasets.extract_patches_bach_wsi.py --data_dir ./data --tile_size {tile_size}')
     
     extraction(args)
