@@ -50,12 +50,6 @@ Moreover, integrating a human in the loop reaches a further gain of 32.7\% with 
 | UNI2h | [📥 Link](https://huggingface.co/MahmoodLab/UNI2-h) | No download is needed but you do need to request access. |
 
 **Important**: For the model CONCH, do not forget to download the checkpoints. 
-=======
-| UNI2h | [📥 Link](https://huggingface.co/MahmoodLab/UNI2-h) | No download is need but you do need to request access. |
-
-**Important**: For thhe model CONCH, do not forget to download the checkpoints. 
->>>>>>> e97eac728ff23660cc1e612ed7a0758eb980488a
-
 
 
 3. Datasets downloads:
