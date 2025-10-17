@@ -315,7 +315,7 @@ def extraction(args):
             tokenizer = get_tokenizer()
         
         if args.dataset in ['skincancer2', 'bach_wsi']: 
-            dataset1 = dataloader_conversion[args.dataset](args.root_dir, preprocess, args.n_patient)
+            dataset1 = dataloader_conversion[args.dataset](args.data_dir, preprocess, args.n_patient)
         elif args.dataset == 'tcga-ut':
             os.environ["HF_HOME"] = env_path
             from datasets import load_dataset
@@ -394,7 +394,7 @@ def extraction(args):
             raise RuntimeError(f"Not implemented for {args.model}")
         
         if args.dataset in ['skincancer2', 'bach_wsi']: 
-            dataset2 = dataloader_conversion[args.dataset](args.root_dir, transform2, args.n_patient) 
+            dataset2 = dataloader_conversion[args.dataset](args.data_dir, transform2, args.n_patient) 
         elif args.dataset == 'tcga-ut':
             os.environ["HF_HOME"] = env_path
             from datasets import load_dataset
@@ -507,7 +507,7 @@ def parser():
     parser.add_argument('--model', type=str, default='conchanduni2', choices=['clip', 'quilt', 'plip', 'conch', 'plipanduni2', 'conchanduni2', 'conchandgigapath', 'conchandvirshow2', 'conchandoptimus1'])
     parser.add_argument('--backbone', type=str, default='ViT-B/16')
     parser.add_argument('--file_ending', type=str, default='.tif')
-    parser.add_argument('--patch_size', type=int, default=254)
+    parser.add_argument('--patch_size', type=int, default=512)
     parser.add_argument('--n_patient', type=int, default=0)
     parser.add_argument('--dissimilar', action="store_false")
     args = parser.parse_args()
@@ -525,8 +525,8 @@ if __name__ == '__main__':
         get_position = False
 
     if args.dataset == 'bach_wsi':
-        data_dir_patches = os.path.join(args.data_dir, 'thunder', 'datasets', 'bach', 'ICIAR2018_BACH_Challenge', f'patches_{args.size}')
+        data_dir_patches = os.path.join(args.data_dir, 'thunder', 'datasets', 'bach', 'ICIAR2018_BACH_Challenge', f'patches_{args.patch_size}')
         if not os.path.isdir(data_dir_patches):
-            raise RuntimeError('You need to extract patches from the whole slide images. Run the following command: python3 datasets.extract_patches_bach_wsi.py --data_dir ./data --tile_size {tile_size}')
+            raise RuntimeError('You need to extract patches from the whole slide images. Run the following command: python3 datasets.extract_patches_bach_wsi.py --data_dir ./data --tile_size {args.patch_size}')
     
     extraction(args)
