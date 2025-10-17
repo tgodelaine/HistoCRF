@@ -6,7 +6,8 @@ import matplotlib.colors as mcolors
 import numpy as np
 import os 
 
-from plot_results_final import reconstruct, mask_to_centers
+#from plot_results import reconstruct
+from plot_results_final import mask_to_centers, reconstruct
 
 
 # Custom palette
@@ -22,14 +23,24 @@ cmap3 = mcolors.ListedColormap(my_colors)
 
 def visualize(results, npz_path):
     # Define the directory containing the features 
-    data_dir = os.path.join(raw_data_dir, 'data_processed', args.dataset, args.model)
+    root_dir = '/auto/globalscratch/users/t/g/tgodelai/test'
+    data_dir = os.path.join(root_dir, 'data_processed', args.dataset, args.model)
     npz_name = f'{args.dataset}_{args.model}_{args.n_patient}' 
-    #wsi_path = os.path.join(raw_data_dir, 'thunder', 'datasets', 'bach', 'ICIAR2018_BACH_Challenge', 'WSI', 'thumbnails', 'A0{str(args.n_patient)}_thumb.png')
+    wsi_path = f'/auto/globalscratch/users/t/g/tgodelai/thunder/datasets/bach/ICIAR2018_BACH_Challenge/WSI/thumbnails/A0{str(args.n_patient)}_thumb.png'
+
     npz_path = os.path.join(data_dir, npz_name+'.npz')
 
-    # Read npz and access keys
+    # Read npz
     data = np.load(npz_path, allow_pickle=True)
+
     positions = data['positions']
+
+    labels = data['labels']
+    #probabilities = np.argmax(data['probabilities'], axis=1)
+
+    #final_label = data["final_label"]
+    #final_label = [f for i,f in enumerate(final_label) if i in [0, 1, 2, 3]]# [0, 7]]
+
 
     _, label_map = reconstruct(positions, results)
 
@@ -37,7 +48,8 @@ def visualize(results, npz_path):
 
 
 def create_gif(args): 
-    data_dir = os.path.join(raw_data_dir, 'data_processed', args.dataset, args.model)
+    root_dir = '/auto/globalscratch/users/t/g/tgodelai/test'
+    data_dir = os.path.join(root_dir, 'data_processed', args.dataset, args.model)
     npz_name = f'{args.dataset}_{args.model}_{args.n_patient}' 
     npz_path = os.path.join(data_dir, npz_name+'.npz')
 
@@ -56,11 +68,10 @@ def create_gif(args):
     for i, c in enumerate(compat): 
         compat[i] = c.replace("_", "")
     compat = ','.join(compat)
-
-    results_dir = os.path.join(args.root_dir, 'results', args.dataset, args.model)
     json_name = f'gif_{args.N_PROP}_{args.N_UP}_{args.ann_iterations}_{str(args.n_iterations)}_{str(weight)}_{var}_{pp}_{compat}_{str(args.temperature)}_{args.sparse_method}_{str(args.n_affinity)}_{str(args.n_annotations)}_{str(args.n_class_not_annotated)}_{str(args.seed)}_{args.annotation_method}_{args.linear}_{str(npz_name)}.json'
-    json_path = os.path.join(results_dir, json_name)
-    
+    #json_path = os.path.join(root_dir, args.dataset, args.model, json_name)
+    json_path = '/auto/globalscratch/users/t/g/tgodelai/test/results/bach_wsi/conchanduni2/gif_50_-1_5_10_0.1,0.01_1.0_minusmodelfeatures,modelfeaturesann_indicator,potts_0.1_cossim_[0, 16]_5_0_2_circle_False_bach_wsi_conchanduni2_5.json'
+
     with open(json_path, "r") as f:
         results = json.load(f)
     
@@ -71,11 +82,18 @@ def create_gif(args):
         plt.imshow(visualize(final_labels[i], npz_path), cmap=cmap3, interpolation='nearest')
         plt.axis("off")
 
-    propagation_steps = np.arange(50)
-    frames = [plotgif(i) for i in propagation_steps]
+        #return plt.gcf()
 
-    gif_name = json_name.replace('.json', '.gif')
-    gif.save(frames, gif_name, duration=50)
+    propagation_steps = []
+    for i in [4]:
+        p = np.arange(i*50,i*50+50)
+        propagation_steps.extend(p)
+    #np.arange(25) + np.arange(50, 50+25) + + np.arange(100, 100+25)
+    print("propagation_steps", propagation_steps)
+    frames = [plotgif(i) for i in propagation_steps]
+    print("len(frames)", len(frames))
+
+    gif.save(frames, 'example.gif', duration=150)
 
 
 def parser():
@@ -86,7 +104,7 @@ def parser():
                         'cielab_image_and_position', 'edges',
                         'model_features_and_position', 
                         'cos_sim', 'patch', 'prob',
-                        'minus_model_features', 'minus_model_features_ann']
+                        'minus_model_features', 'model_features_ann']
     parser = argparse.ArgumentParser()
     # Setup 
     parser.add_argument('--root_dir', type=str)
@@ -144,6 +162,5 @@ def parser():
 
 if __name__ == '__main__':
     args = parser()
-    raw_data_dir = '/auto/globalscratch/users/t/g/tgodelai/miccai25'
 
-    create_gif(args)
+create_gif(args)
