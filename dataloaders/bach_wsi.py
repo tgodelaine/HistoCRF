@@ -52,6 +52,7 @@ class BACH_WSI(Dataset):
 
         self.dataset_dir = os.path.join(root, self.dataset_dir)
         self.image_dir = os.path.join(self.dataset_dir, 'ICIAR2018_BACH_Challenge', 'patches_512')
+        print("self.image_dir", self.image_dir)
 
         data_files = [f for f in os.listdir(self.image_dir) if f.endswith('.png')]
         data_files = [f for f in data_files if '_A0'+str(n_patient) in f]
