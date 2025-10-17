@@ -2,7 +2,11 @@
 
 Implementation of **[Conditional Random Fields for Interactive Refinement of Histopathological Predictions](doi)**.
 
-<img src="example.gif" align="right" width="250"/>
+<div align="right">
+  <p><b>Example of one iterative message passing step.</b></p>
+  <img src="example.gif" width="250"/>
+</div>
+
 Assisting pathologists in the analysis of histopathological images has high clinical value, as it supports cancer detection and staging. In this context, histology foundation models have recently emerged. Among them, Vision-Language Models (VLMs) provide strong yet imperfect zero-shot predictions. We propose to refine these predictions by adapting Conditional Random Fields (CRFs) to histopathological applications, requiring no additional model training.
 We present HistoCRF, a CRF-based framework, with a novel definition of the pairwise potential that promotes label diversity and leverages expert annotations. We consider three experiments: without annotations, with expert annotations, and with iterative human-in-the-loop annotations that progressively correct misclassified patches.
 Experiments on five patch-level classification datasets covering different organs and diseases demonstrate average accuracy gains of 14.3\% without annotations and 27.1\% with only 100 annotations, compared to zero-shot predictions. 
