@@ -1,6 +1,7 @@
 # Conditional Random Fields for Interactive Refinement of Histopathological Predictions [Submitted to ICASSP 2026]
 
-Implementation of **[Conditional Random Fields for Interactive Refinement of Histopathological Predictions](doi)**.
+<!--  Implementation of **[Conditional Random Fields for Interactive Refinement of Histopathological Predictions](doi)**.
+-->
 
 <img src="example.gif" align="right" width="250"/>
 
@@ -49,7 +50,6 @@ Moreover, integrating a human in the loop reaches a further gain of 32.7\% with 
 | Model        | 🔗 Download Link  | Folder name |
 | -------------- | --------------------------------- | ---------------------------------|
 | CONCH | [📥 Link](https://github.com/mahmoodlab/CONCH) | `./root/HistoCRF/CONCH` |
-<<<<<<< HEAD
 | UNI2h | [📥 Link](https://huggingface.co/MahmoodLab/UNI2-h) | No download is needed but you do need to request access. |
 
 **Important**: For the model CONCH, do not forget to download the checkpoints. 
